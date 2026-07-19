@@ -1,13 +1,13 @@
 import socket, argparse
-import time, random
+import time, random, json
 import threading
 from common_utils import log_time
 
 SERVER_ID = ("0.0.0.0", 8888)
 
 stocks = {
-    "GameStart" : 120.5,
-    "RottenFishCo" : 50.6,
+    "GameStart" : {"price" : 120.5, "volume" : 0},
+    "RottenFishCo" : {"price" : 52.3, "volume" : 0},
 }
 
 parser = argparse.ArgumentParser(description="Server CLI")
@@ -17,6 +17,18 @@ args = parser.parse_args()
 max_thread_cnt = args.thread_count
 queue_lock = threading.Condition()
 request_queue = []
+
+def process_request(req_msg):
+    parts = req_msg.strip().split()
+    if(len(parts)!=2 or parts[0]!='Lookup'):
+        return {"error" : f"Invalid Msg : '{req_msg}'"}
+    resp_json = {}
+    if parts[1] not in stocks:
+        resp_json["status"] = -1
+    else:
+        resp_json["status"] = 1
+        resp_json["price"] = stocks[parts[1]]["price"]
+    return json.dumps(resp_json)
 
 def start_worker():
     while(True):
@@ -28,12 +40,13 @@ def start_worker():
         with conn:
             try:
                 data = conn.recv(1024)
-                print(f"{log_time()}\tGot MSG : {data.decode()}")
-                time.sleep(10+random.random())
-                print(f"{log_time()}\tSending Hello Back!!")
-                conn.sendall(b"Hello back from Server")
+                print(f"[{log_time()}]\tGot MSG : {data.decode()}")
+                resp = process_request(data.decode())
+                time.sleep(5+random.random())
+                print(f"[{log_time()}]\tSending Resp : {resp}")
+                conn.sendall(resp.encode())
             except Exception as e:
-                print(f"{log_time()}\tException - {e}")
+                print(f"[{log_time()}]\tException - {e}")
         
 def start_pool(n):
     for _ in range(n):
