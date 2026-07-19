@@ -1,0 +1,4 @@
+# Python 3.13.2
+asyncio==4.0.0
+sockets==1.0.0
+threaded==4.2.0
