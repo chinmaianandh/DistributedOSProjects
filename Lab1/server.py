@@ -2,68 +2,57 @@ import socket, argparse
 import time, random, json
 import threading
 from common_utils import log_time
+import grpc
+import messages_pb2, messages_pb2_grpc
+from concurrent import futures
 
-SERVER_ID = ("0.0.0.0", 8888)
+SERVER_ID = "localhost:50051"
 
-stocks = {
-    "GameStart" : {"price" : 120.5, "volume" : 0},
-    "RottenFishCo" : {"price" : 52.3, "volume" : 0},
-}
+class StockServicer(messages_pb2_grpc.StockMessageServicer):
+    def __init__(self):
+        self.stocks = {
+            "GameStart" : {"price" : 120.5, "volume" : 1},
+            "RottenFishCo" : {"price" : 52.3, "volume" : 2},
+            "BoarCo" : {"price" : 25.87, "volume" : 3},
+            "MenhirCo" : {"price" : 20.6, "volume" : 4},
+        }
+        self.stock_lock = threading.Lock()
 
-parser = argparse.ArgumentParser(description="Server CLI")
-parser.add_argument("thread_count", type=int, help="no. of threads in threadPool", default=5)
-args = parser.parse_args()
+    def GetStock(self, stock_name):
+        with self.stock_lock:
+            if stock_name in self.stocks:
+                return self.stocks[stock_name]
+        return False
 
-max_thread_cnt = args.thread_count
-queue_lock = threading.Condition()
-request_queue = []
+    def Lookup(self, request, context):
+        print(f"\n[{log_time()}]\tGot MSG : {request}")
+        time.sleep(5+random.random())
+        got = self.GetStock(request.stock_name)
 
-def process_request(req_msg):
-    parts = req_msg.strip().split()
-    if(len(parts)!=2 or parts[0]!='Lookup'):
-        return {"error" : f"Invalid Msg : '{req_msg}'"}
-    resp_json = {}
-    if parts[1] not in stocks:
-        resp_json["status"] = -1
-    else:
-        resp_json["status"] = 1
-        resp_json["price"] = stocks[parts[1]]["price"]
-    return json.dumps(resp_json)
+        reply = messages_pb2.LookupResponse(status_code=-1, price=0, volume=0)
+        if(got):
+            reply.status_code = 0
+            reply.price = got['price']
+            reply.volume = got['volume']
+        print(f"[{log_time()}]\tSending Resp : {reply}")
+        return reply
 
-def start_worker():
-    while(True):
-        conn = False
-        with queue_lock:
-            while not request_queue:
-                queue_lock.wait()
-            conn, client_addr = request_queue.pop(0)
-        with conn:
-            try:
-                data = conn.recv(1024)
-                print(f"[{log_time()}]\tGot MSG : {data.decode()}")
-                resp = process_request(data.decode())
-                time.sleep(5+random.random())
-                print(f"[{log_time()}]\tSending Resp : {resp}")
-                conn.sendall(resp.encode())
-            except Exception as e:
-                print(f"[{log_time()}]\tException - {e}")
-        
-def start_pool(n):
-    for _ in range(n):
-        threading.Thread(target=start_worker, daemon=True).start()
 
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+def serve(max_workers = 5):
+    server = grpc.server(
+        futures.ThreadPoolExecutor(max_workers),
+        maximum_concurrent_rpcs=20,
+    )
+    messages_pb2_grpc.add_StockMessageServicer_to_server(StockServicer(), server)
+    server.add_insecure_port(SERVER_ID)
+    server.start()
+    print(f"serving on {SERVER_ID}")
+    server.wait_for_termination()
 
-s.bind(SERVER_ID)
+if __name__ == "__main__":    
+    parser = argparse.ArgumentParser(description="Server CLI")
+    parser.add_argument("--thread_count", type=int, help="no. of threads in threadPool", default=5)
+    args = parser.parse_args()
+    max_thread_cnt = args.thread_count
 
-s.listen(5)
-
-start_pool(max_thread_cnt)
-
-while(1):
-    conn, client_addr = s.accept()
-    with queue_lock:
-        request_queue.append((conn, client_addr))
-        queue_lock.notify()
-    
+    serve(max_thread_cnt)

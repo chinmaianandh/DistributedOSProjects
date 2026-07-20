@@ -1,7 +1,7 @@
 import threading, time, random
 from client import ping_n_times
 
-SERVER_ID = ("0.0.0.0", 8888)
+SERVER_ID = "localhost:50051"
 
 ts = []
 for i in range(10):

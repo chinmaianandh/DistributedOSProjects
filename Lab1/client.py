@@ -2,28 +2,26 @@ import socket
 import argparse
 import time, random, math
 from common_utils import log_time
+import grpc
+import messages_pb2, messages_pb2_grpc
 
-SERVER_ID = ("0.0.0.0", 8888)
+SERVER_ID = "localhost:50051"
 
-stock_options = ["GameStart", "RottenFishCo"]
+stock_options = ["GameStart", "RottenFishCo", "BoarCo", "MenhirCo"]
 
-def ping_server(SERVER_ID, client_name):
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect(SERVER_ID)
 
-    stock_name = random.choice(stock_options)
-    print(f"{client_name}\t[{log_time()}]\tSending Lookup {stock_name}")
-    s.sendall(f"Lookup {stock_name}".encode())
+def ping_server(channel, client_name):
+        stub = messages_pb2_grpc.StockMessageStub(channel)
 
-    data = s.recv(1024)
-
-    print(f"{client_name}\t[{log_time()}]\tReveived : {data.decode()}")
-
-    s.close()
+        stock_name = random.choice(stock_options)
+        print(f"\n{client_name}\t[{log_time()}]\tSending Lookup {stock_name}")
+        reply = stub.Lookup(messages_pb2.LookupRequest(stock_name=stock_name))
+        print(f"{client_name}\t[{log_time()}]\tReceived : {reply}")
 
 def ping_n_times(SERVER_ID, client_name, num_reqs):
-    for i in range(num_reqs):
-        ping_server(SERVER_ID, client_name)
+    with grpc.insecure_channel(SERVER_ID) as channel:
+        for i in range(num_reqs):
+            ping_server(channel, client_name)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Client CLI")

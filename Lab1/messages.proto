@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package messages;
+
+service StockMessage {
+    rpc Lookup (LookupRequest) returns (LookupResponse);
+}
+
+message LookupRequest {
+    string stock_name = 1;
+}
+
+message LookupResponse {
+    int32 status_code = 1;
+    double price = 2;
+    int64 volume = 3;
+}
