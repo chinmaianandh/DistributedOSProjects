@@ -39,12 +39,34 @@ class StockMessageStub:
                 request_serializer=messages__pb2.LookupRequest.SerializeToString,
                 response_deserializer=messages__pb2.LookupResponse.FromString,
                 _registered_method=True)
+        self.Trade = channel.unary_unary(
+                '/messages.StockMessage/Trade',
+                request_serializer=messages__pb2.TradeRequest.SerializeToString,
+                response_deserializer=messages__pb2.TradeResponse.FromString,
+                _registered_method=True)
+        self.Update = channel.unary_unary(
+                '/messages.StockMessage/Update',
+                request_serializer=messages__pb2.UpdateRequest.SerializeToString,
+                response_deserializer=messages__pb2.UpdateResponse.FromString,
+                _registered_method=True)
 
 
 class StockMessageServicer:
     """Missing associated documentation comment in .proto file."""
 
     def Lookup(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def Trade(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def Update(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -57,6 +79,16 @@ def add_StockMessageServicer_to_server(servicer, server):
                     servicer.Lookup,
                     request_deserializer=messages__pb2.LookupRequest.FromString,
                     response_serializer=messages__pb2.LookupResponse.SerializeToString,
+            ),
+            'Trade': grpc.unary_unary_rpc_method_handler(
+                    servicer.Trade,
+                    request_deserializer=messages__pb2.TradeRequest.FromString,
+                    response_serializer=messages__pb2.TradeResponse.SerializeToString,
+            ),
+            'Update': grpc.unary_unary_rpc_method_handler(
+                    servicer.Update,
+                    request_deserializer=messages__pb2.UpdateRequest.FromString,
+                    response_serializer=messages__pb2.UpdateResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -86,6 +118,60 @@ class StockMessage:
             '/messages.StockMessage/Lookup',
             messages__pb2.LookupRequest.SerializeToString,
             messages__pb2.LookupResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def Trade(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/messages.StockMessage/Trade',
+            messages__pb2.TradeRequest.SerializeToString,
+            messages__pb2.TradeResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def Update(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/messages.StockMessage/Update',
+            messages__pb2.UpdateRequest.SerializeToString,
+            messages__pb2.UpdateResponse.FromString,
             options,
             channel_credentials,
             insecure,

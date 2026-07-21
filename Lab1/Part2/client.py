@@ -5,18 +5,38 @@ from common_utils import log_time
 import grpc
 import messages_pb2, messages_pb2_grpc
 
-SERVER_ID = "localhost:50051"
+SERVER_ID = "0.0.0.0:50051"
 
 stock_options = ["GameStart", "RottenFishCo", "BoarCo", "MenhirCo"]
 
 
-def ping_server(channel, client_name):
-        stub = messages_pb2_grpc.StockMessageStub(channel)
 
-        stock_name = random.choice(stock_options)
-        print(f"\n{client_name}\t[{log_time()}]\tSending Lookup {stock_name}")
-        reply = stub.Lookup(messages_pb2.LookupRequest(stock_name=stock_name))
-        print(f"{client_name}\t[{log_time()}]\tReceived : {reply}")
+def ping_server_trade(channel, client_name):     
+    trade_options = [messages_pb2.TradeAction.TRADE_SELL, messages_pb2.TradeAction.TRADE_BUY]
+    stub = messages_pb2_grpc.StockMessageStub(channel)
+
+    stock_name = random.choice(stock_options)
+    print(f"\n{client_name}\t[{log_time()}]\tSending TradeReq {stock_name}")
+    reply = stub.Trade(messages_pb2.TradeRequest(stock_name=stock_name, num_of_items=random.randint(50, 100), trade_type=random.choice(trade_options)))
+    print(f"{client_name}\t[{log_time()}]\tReceived TradeResp : {reply}")
+
+
+def ping_server_lookup(channel, client_name):
+    stub = messages_pb2_grpc.StockMessageStub(channel)
+
+    stock_name = random.choice(stock_options)
+    print(f"\n{client_name}\t[{log_time()}]\tSending LookupReq {stock_name}")
+    reply = stub.Lookup(messages_pb2.LookupRequest(stock_name=stock_name))
+    print(f"{client_name}\t[{log_time()}]\tReceived LookupResp : {reply}")
+
+def ping_server(channel, client_name):
+    ping_options = ["Lookup", "Trade"]
+    action = random.choice(ping_options)
+    if action=='Lookup':
+        ping_server_lookup(channel, client_name)
+    elif action=='Trade':
+        ping_server_trade(channel, client_name)
+
 
 def ping_n_times(SERVER_ID, client_name, num_reqs):
     with grpc.insecure_channel(SERVER_ID) as channel:
