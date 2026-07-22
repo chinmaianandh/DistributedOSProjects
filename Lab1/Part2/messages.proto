@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+package messages;
+
+service StockMessage {
+    rpc Lookup (LookupRequest) returns (LookupResponse);
+    rpc Trade (TradeRequest) returns (TradeResponse);
+    rpc Update (UpdateRequest) returns (UpdateResponse);
+}
+
+message LookupRequest {
+    string stock_name = 1;
+}
+
+message LookupResponse {
+    int32 status_code = 1;
+    double price = 2;
+    int64 volume = 3;
+}
+
+enum TradeAction {
+    TRADE_BUY = 0;
+    TRADE_SELL = 1;
+}
+
+message TradeRequest {
+    string stock_name = 1;
+    int64 num_of_items = 2;
+    TradeAction trade_type = 3;
+}
+
+message TradeResponse {
+    int32 status_code = 1;
+}
+
+message UpdateRequest {
+    string stock_name = 1;
+    double price = 2;
+}
+
+message UpdateResponse {
+    int32 status_code = 1;
+}

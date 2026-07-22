@@ -1,0 +1,32 @@
+services:
+  server:
+    build: .
+    command: python Part2/server.py --thread_count 2 --max_volume 100
+    networks: [stocknet]
+
+  lookup-client:
+    build: .
+    command: python Part2/client.py --mode lookup --num_reqs 10000 --server server:50051 --name lookup-client
+    depends_on: [server]
+    networks: [stocknet]
+    volumes:
+      - ./results:/app/results
+
+  trade-client:
+    build: .
+    command: python Part2/client.py --mode trade --num_reqs 10000 --server server:50051 --name trade-client
+    depends_on: [server]
+    networks: [stocknet]
+    volumes:
+      - ./results:/app/results
+
+  update-client:
+    build: .
+    command: python Part2/client.py --mode update --num_reqs 10000 --server server:50051 --name update-client
+    depends_on: [server]
+    networks: [stocknet]
+    volumes:
+      - ./results:/app/results
+
+networks:
+  stocknet:
